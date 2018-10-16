@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -21,8 +22,10 @@ public class CircleProgressBar extends View {
     public static final int DIVISION_LINE_WIDTH_MIN = 5;
     public static final float DIVISION_LINE_WIDTH_SCALE = 0.01f;
     public static final int VALUE_LINE_WIDTH_MIN = 8;
-    public static final float VALUE_LINE_WIDTH_SCALE = 0.05f;
+    public static final float VALUE_LINE_WIDTH_SCALE = 0.07f;
     public static final float DIVISION_ARC_SCALE = 0.82f;
+    private final static float VALUE_TEXT_SIZE_SCALE = 0.7f;
+    private final static float PERCENT_TEXT_SIZE_SCALE = 0.3f;
 
     private int mWidthSpecSize;
     private int mHeightSpecSize;
@@ -31,19 +34,19 @@ public class CircleProgressBar extends View {
     private float mCy;
     private RectF mMainBounds;
     private RectF mDivisionArcBounds;
-    //private RectF mDivisionArcBackgroundBounds;
-  //  private RectF mValueArcBounds;
-   // private RectF mValueArcBackgroundBounds;
+    private Rect mValueTextBounds;
     private int mDivisionTotalCount;
     private float mDivisionAngel;
     private Paint mDivisionPaint;
     private Paint mValuePaint;
     private Paint mBackgroundPaint;
+    private Paint mValueTextPaint;
+    private Paint mPercentTextPaint;
     private float mDivisionLineWidth;
     private float mValueLineWidth;
     private int mValue;
     private String valueString;
-    private float mValueLineCentralRadius;
+    private float mDivisionArcRadius;
 
 
     public CircleProgressBar(Context context) {
@@ -77,13 +80,17 @@ public class CircleProgressBar extends View {
         mBackgroundPaint.setAntiAlias(true);
         mBackgroundPaint.setStyle(Paint.Style.FILL);
 
-        mDivisionArcBounds = new RectF();
-       // mDivisionArcBackgroundBounds = new RectF();
-        mMainBounds = new RectF();
-       // mValueArcBounds = new RectF();
-       // mValueArcBackgroundBounds = new RectF();
+        mValueTextPaint = new Paint();
+        mValueTextPaint.setColor(Color.BLACK);
 
-        mValue = 77;
+        mPercentTextPaint = new Paint();
+        mPercentTextPaint.setColor(Color.BLACK);
+
+        mDivisionArcBounds = new RectF();
+        mMainBounds = new RectF();
+        mValueTextBounds = new Rect();
+
+        setValue(100);
     }
 
     @Override
@@ -99,11 +106,24 @@ public class CircleProgressBar extends View {
         mCy = mHeightSpecSize / 2;
 
         calculateBounds();
+        calculateTextSize();
 
         mDivisionTotalCount = DIVISION_MAIN_SECTION_COUNT * DIVISION_INTERMEDIATE_SECTION_COUNT;
         mDivisionAngel = ((float) DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL) / mDivisionTotalCount;
 
         setMeasuredDimension(mWidthSpecSize, mHeightSpecSize);
+    }
+
+    private void calculateTextSize() {
+        float textSize = 1;
+        mValueTextPaint.setTextAlign(Paint.Align.CENTER);
+        mPercentTextPaint.setTextAlign(Paint.Align.CENTER);
+        mValueTextPaint.setTextSize(textSize);
+        while (mValueTextPaint.measureText("100") <= mRadius * VALUE_TEXT_SIZE_SCALE) {
+            textSize += 1;
+            mValueTextPaint.setTextSize(textSize);
+        }
+        mPercentTextPaint.setTextSize(mValueTextPaint.getTextSize() * PERCENT_TEXT_SIZE_SCALE);
     }
 
     private void calculateLineWidth() {
@@ -121,49 +141,40 @@ public class CircleProgressBar extends View {
     }
 
     private void calculateBounds() {
+        mDivisionArcRadius = mRadius * DIVISION_ARC_SCALE;
         mMainBounds.set(mCx - mRadius, mCy - mRadius, mCx + mRadius, mCy + mRadius);
-        float divisionArcRadius = mRadius * DIVISION_ARC_SCALE;
-        mValueLineCentralRadius = divisionArcRadius - mDivisionLineWidth;
-
-       // float divisionBackgroundRadius = divisionArcRadius - mDivisionLineWidth;
-        //float valueArcRadius = mValueLineCentralRadius + mDivisionLineWidth / 2;
-        //float valueBackgroundRadius = valueArcRadius + mDivisionLineWidth / 2;
-
-
-        mDivisionArcBounds.set(mCx - divisionArcRadius,
-                mCy - divisionArcRadius,
-                mCx + divisionArcRadius,
-                mCy + divisionArcRadius);
-
-//        mDivisionArcBackgroundBounds.set(mCx - divisionBackgroundRadius,
-//                mCy - divisionBackgroundRadius,
-//                mCx + divisionBackgroundRadius,
-//                mCy + divisionBackgroundRadius);
-
-//        mValueArcBounds.set(mCx - valueArcRadius,
-//                mCy - valueArcRadius,
-//                mCx + valueArcRadius,
-//                mCy + valueArcRadius);
-
-//        mValueArcBackgroundBounds.set(mCx - valueBackgroundRadius,
-//                mCy - valueBackgroundRadius,
-//                mCx + valueBackgroundRadius,
-//                mCy + valueBackgroundRadius);
-
+        mDivisionArcBounds.set(mCx - mDivisionArcRadius,
+                mCy - mDivisionArcRadius,
+                mCx + mDivisionArcRadius,
+                mCy + mDivisionArcRadius);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         drawDivisions(canvas);
         drawValueArc(canvas);
+        drawValueText(canvas);
+    }
+
+    private void drawValueText(Canvas canvas) {
+        mValueTextPaint.getTextBounds(valueString, 0, valueString.length(), mValueTextBounds);
+        canvas.drawText(String.valueOf(mValue), mCx, mCy + mValueTextBounds.height() / 2, mValueTextPaint);
+
+        canvas.drawText("%", mCx, mCy + mValueTextBounds.height(), mPercentTextPaint);
     }
 
     private void drawValueArc(Canvas canvas) {
-        Point point;
+
         float angel = (float) mValue / 100 * (DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL);
         canvas.drawArc(mDivisionArcBounds, DIVISION_BEGIN_ANGEL, angel, false, mValuePaint);
-        //canvas.drawCircle();
-       // canvas.drawArc(mValueArcBackgroundBounds, 0, 360, true, mBackgroundPaint);
+        drawTerminateCircle(canvas, DIVISION_BEGIN_ANGEL);
+        drawTerminateCircle(canvas, DIVISION_BEGIN_ANGEL + angel);
+    }
+
+    private void drawTerminateCircle(Canvas canvas, float angel) {
+        Point point = new Point();
+        polarToDecart(angel, mDivisionArcRadius, point);
+        canvas.drawCircle(point.x, point.y, 0.01f, mValuePaint);
     }
 
     private void drawDivisions(Canvas canvas) {
