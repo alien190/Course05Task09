@@ -49,7 +49,13 @@ public class CircleProgressBar extends View {
     private String valueString;
     private float mDivisionArcRadius;
     private int mColorMin;
+    private int mColorMinRed;
+    private int mColorMinBlue;
+    private int mColorMinGreen;
     private int mColorMax;
+    private int mColorMaxRed;
+    private int mColorMaxBlue;
+    private int mColorMaxGreen;
 
 
     public CircleProgressBar(Context context) {
@@ -173,12 +179,14 @@ public class CircleProgressBar extends View {
     }
 
     private void drawValueArc(Canvas canvas) {
-
         if (mValue != 0) {
-            if(mColorMax==-1) {
+            if (mColorMax == -1) {
                 mValuePaint.setColor(mColorMin);
             } else {
-                mValuePaint.setColor((mColorMax-mColorMin)*mValue/100 + mColorMin);
+                int blue = (mColorMaxBlue - mColorMinBlue) * mValue / 100 + mColorMinBlue;
+                int red = (mColorMaxRed - mColorMinRed) * mValue / 100 + mColorMinRed;
+                int green = (mColorMaxGreen - mColorMinGreen) * mValue / 100 + mColorMinGreen;
+                mValuePaint.setColor(Color.rgb(red, green, blue));
             }
 
             float angel = (float) mValue / 100 * (DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL);
@@ -255,10 +263,17 @@ public class CircleProgressBar extends View {
 
     private void setProgressBarColorMin(int color) {
         mColorMin = color;
+        mColorMinRed = Color.red(color);
+        mColorMinBlue = Color.blue(color);
+        mColorMinGreen = Color.green(color);
         invalidate();
     }
+
     private void setProgressBarColorMax(int color) {
         mColorMax = color;
+        mColorMaxRed = Color.red(color);
+        mColorMaxBlue = Color.blue(color);
+        mColorMaxGreen = Color.green(color);
         invalidate();
     }
 }
