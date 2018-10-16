@@ -138,6 +138,7 @@ public class CircleProgressBar extends View {
             textSize += 1;
             mValueTextPaint.setTextSize(textSize);
         }
+        mValueTextPaint.getTextBounds("100", 0, valueString.length(), mValueTextBounds);
         mPercentTextPaint.setTextSize(mValueTextPaint.getTextSize() * PERCENT_TEXT_SIZE_SCALE);
     }
 
@@ -172,9 +173,7 @@ public class CircleProgressBar extends View {
     }
 
     private void drawValueText(Canvas canvas) {
-        mValueTextPaint.getTextBounds(valueString, 0, valueString.length(), mValueTextBounds);
         canvas.drawText(String.valueOf(mValue), mCx, mCy + mValueTextBounds.height() / 2, mValueTextPaint);
-
         canvas.drawText("%", mCx, mCy + mValueTextBounds.height(), mPercentTextPaint);
     }
 
