@@ -1,6 +1,7 @@
 package com.example.alien.course05task09;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -47,6 +48,8 @@ public class CircleProgressBar extends View {
     private int mValue;
     private String valueString;
     private float mDivisionArcRadius;
+    private int mColorMin;
+    private int mColorMax;
 
 
     public CircleProgressBar(Context context) {
@@ -65,32 +68,38 @@ public class CircleProgressBar extends View {
     }
 
     private void init(Context context, AttributeSet attrs) {
+
         mDivisionPaint = new Paint();
-        mDivisionPaint.setColor(Color.BLACK);
         mDivisionPaint.setAntiAlias(true);
         mDivisionPaint.setStyle(Paint.Style.STROKE);
 
         mValuePaint = new Paint();
-        mValuePaint.setColor(Color.BLUE);
         mValuePaint.setAntiAlias(true);
         mValuePaint.setStyle(Paint.Style.STROKE);
 
         mBackgroundPaint = new Paint();
-        mBackgroundPaint.setColor(Color.WHITE);
         mBackgroundPaint.setAntiAlias(true);
         mBackgroundPaint.setStyle(Paint.Style.FILL);
 
         mValueTextPaint = new Paint();
-        mValueTextPaint.setColor(Color.BLACK);
 
         mPercentTextPaint = new Paint();
-        mPercentTextPaint.setColor(Color.BLACK);
 
         mDivisionArcBounds = new RectF();
         mMainBounds = new RectF();
         mValueTextBounds = new Rect();
 
-        setValue(100);
+        TypedArray mainTypedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CircleProgressBar,
+                0, R.style.DefaultCircleProgressBar);
+
+        setValue(mainTypedArray.getInteger(R.styleable.CircleProgressBar_value, 0));
+        setColor(mainTypedArray.getColor(R.styleable.CircleProgressBar_color, Color.BLACK));
+        setBackgroundColor(mainTypedArray.getColor(R.styleable.CircleProgressBar_backgroundColor, Color.WHITE));
+        setProgressBarColorMin(mainTypedArray.getColor(R.styleable.CircleProgressBar_progressBarColorMin, Color.BLUE));
+        setProgressBarColorMax(mainTypedArray.getColor(R.styleable.CircleProgressBar_progressBarColorMax, -1));
+        mainTypedArray.recycle();
+
+        //setValue(100);
     }
 
     @Override
@@ -165,10 +174,18 @@ public class CircleProgressBar extends View {
 
     private void drawValueArc(Canvas canvas) {
 
-        float angel = (float) mValue / 100 * (DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL);
-        canvas.drawArc(mDivisionArcBounds, DIVISION_BEGIN_ANGEL, angel, false, mValuePaint);
-        drawTerminateCircle(canvas, DIVISION_BEGIN_ANGEL);
-        drawTerminateCircle(canvas, DIVISION_BEGIN_ANGEL + angel);
+        if (mValue != 0) {
+            if(mColorMax==-1) {
+                mValuePaint.setColor(mColorMin);
+            } else {
+                mValuePaint.setColor((mColorMax-mColorMin)*mValue/100 + mColorMin);
+            }
+
+            float angel = (float) mValue / 100 * (DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL);
+            canvas.drawArc(mDivisionArcBounds, DIVISION_BEGIN_ANGEL, angel, false, mValuePaint);
+            drawTerminateCircle(canvas, DIVISION_BEGIN_ANGEL);
+            drawTerminateCircle(canvas, DIVISION_BEGIN_ANGEL + angel);
+        }
     }
 
     private void drawTerminateCircle(Canvas canvas, float angel) {
@@ -221,6 +238,27 @@ public class CircleProgressBar extends View {
             mValue = 100;
         }
         valueString = String.valueOf(mValue);
+        invalidate();
+    }
+
+    public void setColor(int color) {
+        mDivisionPaint.setColor(color);
+        mValueTextPaint.setColor(color);
+        mPercentTextPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setBackgroundColor(int color) {
+        mBackgroundPaint.setColor(color);
+        invalidate();
+    }
+
+    private void setProgressBarColorMin(int color) {
+        mColorMin = color;
+        invalidate();
+    }
+    private void setProgressBarColorMax(int color) {
+        mColorMax = color;
         invalidate();
     }
 }

@@ -8,4 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="DefaultCircleProgressBar">
+        <item name="color">@color/colorBlack</item>
+        <item name="progressBarColorMin">@color/colorProgressBar</item>
+    </style>
+
 </resources>

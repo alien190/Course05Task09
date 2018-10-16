@@ -8,6 +8,9 @@
 
     <com.example.alien.course05task09.CircleProgressBar
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        app:progressBarColorMin="@color/colorProgressBar"
+        app:progressBarColorMax="@color/colorAccent"
+        app:value="77"/>
 
 </LinearLayout>
