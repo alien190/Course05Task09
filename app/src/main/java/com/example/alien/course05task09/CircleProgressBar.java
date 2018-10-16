@@ -20,8 +20,9 @@ public class CircleProgressBar extends View {
     public static final float DIVISION_INTERMEDIATE_SECTION_HEIGHT_SCALE = 0.05f;
     public static final int DIVISION_LINE_WIDTH_MIN = 5;
     public static final float DIVISION_LINE_WIDTH_SCALE = 0.01f;
+    public static final int VALUE_LINE_WIDTH_MIN = 8;
+    public static final float VALUE_LINE_WIDTH_SCALE = 0.02f;
     public static final float DIVISION_ARC_SCALE = 0.82f;
-
 
     private int mWidthSpecSize;
     private int mHeightSpecSize;
@@ -29,13 +30,19 @@ public class CircleProgressBar extends View {
     private float mCx;
     private float mCy;
     private RectF mMainBounds;
-    private RectF mArcBounds;
-    private RectF mArcBoundsBackground;
+    private RectF mDivisionArcBounds;
+    private RectF mDivisionArcBackgroundBounds;
+    private RectF mValueArcBounds;
+    private RectF mValueArcBackgroundBounds;
     private int mDivisionTotalCount;
     private float mDivisionAngel;
     private Paint mDivisionPaint;
+    private Paint mValuePaint;
     private Paint mBackgroundPaint;
     private float mDivisionLineWidth;
+    private float mValueLineWidth;
+    private int mValue;
+    private String valueString;
 
 
     public CircleProgressBar(Context context) {
@@ -59,14 +66,21 @@ public class CircleProgressBar extends View {
         mDivisionPaint.setAntiAlias(true);
         mDivisionPaint.setStyle(Paint.Style.FILL);
 
+        mValuePaint = new Paint();
+        mValuePaint.setColor(Color.BLACK);
+        mValuePaint.setAntiAlias(true);
+        mValuePaint.setStyle(Paint.Style.FILL);
+
         mBackgroundPaint = new Paint();
         mBackgroundPaint.setColor(Color.WHITE);
         mBackgroundPaint.setAntiAlias(true);
         mBackgroundPaint.setStyle(Paint.Style.FILL);
 
-        mArcBounds = new RectF();
-        mArcBoundsBackground = new RectF();
+        mDivisionArcBounds = new RectF();
+        mDivisionArcBackgroundBounds = new RectF();
         mMainBounds = new RectF();
+        mValueArcBounds = new RectF();
+        mValueArcBackgroundBounds = new RectF();
     }
 
     @Override
@@ -76,7 +90,7 @@ public class CircleProgressBar extends View {
 
         mRadius = Math.min(mWidthSpecSize, mHeightSpecSize) / 2 * 0.9f;
 
-        calculateDivisionLineWidth();
+        calculateLineWidth();
 
         mCx = mWidthSpecSize / 2;
         mCy = mHeightSpecSize / 2;
@@ -89,32 +103,58 @@ public class CircleProgressBar extends View {
         setMeasuredDimension(mWidthSpecSize, mHeightSpecSize);
     }
 
-    private void calculateDivisionLineWidth() {
+    private void calculateLineWidth() {
         mDivisionLineWidth = mRadius * DIVISION_LINE_WIDTH_SCALE;
         if (mDivisionLineWidth < DIVISION_LINE_WIDTH_MIN) {
             mDivisionLineWidth = DIVISION_LINE_WIDTH_MIN;
         }
         mDivisionPaint.setStrokeWidth(mDivisionLineWidth);
+
+        mValueLineWidth = mRadius * VALUE_LINE_WIDTH_SCALE;
+        if (mValueLineWidth < VALUE_LINE_WIDTH_MIN) {
+            mValueLineWidth = VALUE_LINE_WIDTH_MIN;
+        }
+        mValuePaint.setStrokeWidth(mDivisionLineWidth);
     }
 
     private void calculateBounds() {
         mMainBounds.set(mCx - mRadius, mCy - mRadius, mCx + mRadius, mCy + mRadius);
-        mArcBounds.set(mCx - mRadius * DIVISION_ARC_SCALE,
-                mCy - mRadius * DIVISION_ARC_SCALE,
-                mCx + mRadius * DIVISION_ARC_SCALE,
-                mCy + mRadius * DIVISION_ARC_SCALE);
+        float divisionArcRadius = mRadius * DIVISION_ARC_SCALE;
+        float divisionBackgroundRadius = divisionArcRadius - mDivisionLineWidth;
+        float valueArcRadius = (divisionArcRadius - divisionBackgroundRadius) / 2 + divisionBackgroundRadius + mDivisionLineWidth / 2;
+        float valueBackgroundRadius = valueArcRadius + mDivisionLineWidth / 2;
 
+        mDivisionArcBounds.set(mCx - divisionArcRadius,
+                mCy - divisionArcRadius,
+                mCx + divisionArcRadius,
+                mCy + divisionArcRadius);
 
-        mArcBoundsBackground.set(mCx - mRadius * DIVISION_ARC_SCALE + mDivisionLineWidth,
-                mCy - mRadius * DIVISION_ARC_SCALE + mDivisionLineWidth,
-                mCx + mRadius * DIVISION_ARC_SCALE - mDivisionLineWidth,
-                mCy + mRadius * DIVISION_ARC_SCALE - mDivisionLineWidth);
+        mDivisionArcBackgroundBounds.set(mCx - divisionBackgroundRadius,
+                mCy - divisionBackgroundRadius,
+                mCx + divisionBackgroundRadius,
+                mCy + divisionBackgroundRadius);
+
+        mValueArcBounds.set(mCx - valueArcRadius,
+                mCy - valueArcRadius,
+                mCx + valueArcRadius,
+                mCy + valueArcRadius);
+
+        mValueArcBackgroundBounds.set(mCx - valueBackgroundRadius,
+                mCy - valueBackgroundRadius,
+                mCx + valueBackgroundRadius,
+                mCy + valueBackgroundRadius);
 
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         drawDivisions(canvas);
+        drawValueArc();
+    }
+
+    private void drawValueArc() {
+        float angel = (float) mValue / 100 * (DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL);
+
     }
 
     private void drawDivisions(Canvas canvas) {
@@ -143,12 +183,24 @@ public class CircleProgressBar extends View {
             canvas.drawLine(pointStart.x, pointStart.y, pointEnd.x, pointEnd.y, mDivisionPaint);
         }
 
-        canvas.drawArc(mArcBounds, DIVISION_BEGIN_ANGEL, DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL, true, mDivisionPaint);
-        canvas.drawArc(mArcBoundsBackground, 0, 360, true, mBackgroundPaint);
+        canvas.drawArc(mDivisionArcBounds, DIVISION_BEGIN_ANGEL, DIVISION_END_ANGEL - DIVISION_BEGIN_ANGEL, true, mDivisionPaint);
+        canvas.drawArc(mDivisionArcBackgroundBounds, 0, 360, true, mBackgroundPaint);
     }
 
     private void polarToDecart(float angel, float radius, @NonNull Point point) {
         point.x = (int) (radius * Math.cos(Math.toRadians(-angel)) + mCx);
         point.y = (int) (mCy - radius * Math.sin(Math.toRadians(-angel)));
+    }
+
+    public void setValue(int value) {
+        if (value >= 0 && value <= 100) {
+            mValue = value;
+        } else if (value < 0) {
+            mValue = 0;
+        } else {
+            mValue = 100;
+        }
+        valueString = String.valueOf(mValue);
+        invalidate();
     }
 }
